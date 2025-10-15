@@ -1,13 +1,16 @@
+import { defineConfig } from 'vite';
+
 import restart from 'vite-plugin-restart';
 import mkcert from 'vite-plugin-mkcert';
 
-export default {
+
+export default defineConfig({
   root: 'src/', // Sources files (typically where index.html is)
   publicDir: '../static/', // Path from "root" to static assets
   base: './',
   server: {
     host: true, // Open to local network and display URL
-    https: true,
+    https: {},
     port: 5173,
     open: !('SANDBOX_URL' in process.env || 'CODESANDBOX_HOST' in process.env), // Open if it's not a CodeSandbox
   },
@@ -20,4 +23,4 @@ export default {
     restart({ restart: ['../static/**'] }), // Restart server on static file change
     mkcert(), // mkcert plugin for trusted local HTTPS certs
   ],
-};
+});
