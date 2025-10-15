@@ -1,10 +1,11 @@
+import type {Sizes, ControllerType, Controllers, Globals }  from './types.ts'
 import * as THREE from 'three'; //import Three.js
 import * as HELPER from './helpers.js';
 
 import { GamepadWrapper, XR_BUTTONS, XR_AXES } from 'gamepad-wrapper'; //Gamepad input controls
 import { gsap } from 'gsap'; //Js library to simplify animation
 
-export function addTemplateObjects(scene) {
+export function addTemplateObjects(scene : THREE.Scene) {
   // Add die
 
   var loader = new THREE.TextureLoader();
@@ -32,7 +33,7 @@ export function addTemplateObjects(scene) {
   scene.add(floor);
 }
 
-export function addTemplateMovement(player, camera, controllers) {
+export function addTemplateMovement(player:THREE.Group, camera : THREE.Camera, controllers : Controllers) {
   if (!controllers.left) return;
 
   const x = controllers.left.gamepad.getAxis(XR_AXES.THUMBSTICK_X);
@@ -62,7 +63,7 @@ export function addTemplateMovement(player, camera, controllers) {
   player.position.add(moveZ);
 }
 
-export function addTemplateRotation(player, camera, controllers) {
+export function addTemplateRotation(player:THREE.Group, controllers : Controllers) {
   if (!controllers.right) return;
 
   const x = controllers.right.gamepad.getAxis(XR_AXES.THUMBSTICK_X);
@@ -87,7 +88,7 @@ export function addTemplateRotation(player, camera, controllers) {
   player.userData.turning = true;
 }
 
-export function addTemplateJump(player, controllers) {
+export function addTemplateJump(player:THREE.Group, controllers : Controllers) {
   if (!controllers.right) return;
 
   const buttonPressed = controllers.right.gamepad.getButtonUp(XR_BUTTONS.BUTTON_1);
@@ -118,10 +119,10 @@ export function addTemplateJump(player, controllers) {
   }
 }
 
-export function addTemplateInteraction(scene, controllers) {
+export function addTemplateInteraction(scene : THREE.Scene, controllers : Controllers) {
   if (!controllers.right && !controllers.left) return;
 
-  const interactableObjects = [];
+  const interactableObjects : THREE.Object3D[] = [];
   scene.traverse((object) => {
     if (object.userData && object.userData.interactable) {
       interactableObjects.push(object);

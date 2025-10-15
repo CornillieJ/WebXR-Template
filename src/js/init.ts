@@ -1,5 +1,5 @@
+import type {Sizes, ControllerType, Controllers, Globals }  from './types.ts'
 import * as THREE from 'three'; //Three.js
-
 import { GamepadWrapper } from 'gamepad-wrapper'; //Gamepad input controls
 
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'; //mouse+kb controls
@@ -7,7 +7,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'; 
 import { VRButton } from 'three/addons/webxr/VRButton.js'; //Add button to enter VR mode
 import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory.js'; //3D models for controllers
 
-export function init(setupScene = () => {}, onFrame = () => {}) {
+export function init(setupScene = (globals:Globals) => {}, onFrame = (delta:number,time:number,globals:Globals) => {}) {
   const globals = setupGlobals();
 
   //Handle resize event
@@ -41,8 +41,9 @@ export function init(setupScene = () => {}, onFrame = () => {}) {
 
   globals.renderer.setAnimationLoop(animate);
 }
-function updateSizes(globals) {
-  const sizes = {
+
+function updateSizes(globals:Globals) {
+  const sizes : Sizes = {
     width: window.innerWidth,
     height: window.innerHeight,
   };
@@ -55,9 +56,10 @@ function updateSizes(globals) {
   globals.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 }
 
-function setupGlobals() {
+function setupGlobals() : Globals{
+  
   //Get canvas
-  let canvas = document.querySelector('canvas.webgl');
+  let canvas = document.querySelector('canvas.webgl') as HTMLCanvasElement | null;
   if (!canvas) {
     canvas = document.createElement('canvas');
     canvas.classList.add('webgl');
@@ -99,27 +101,29 @@ function setupGlobals() {
   //Create controllers
   const controllers = createControllers(player, renderer);
 
-  return {
-    canvas,
-    scene,
-    camera,
-    renderer,
-    player,
-    controllers,
-  };
+  //Aggregate globals
+  const globals :Globals = {
+    canvas: canvas,
+    scene: scene,
+    sizes: sizes,
+    camera: camera,
+    renderer: renderer,
+    player: player,
+    controllers: controllers,
+  }
+
+  return globals;
 }
 
-function createControllers(player, renderer) {
+function createControllers(player :  THREE.Group, renderer : THREE.WebGLRenderer) :Controllers{
   const controllerModelFactory = new XRControllerModelFactory();
-  const controllers = {
-    left: null,
-    right: null,
-  };
+  const controllers: Controllers = {};
+
   for (let i = 0; i < 2; i++) {
     const raySpace = renderer.xr.getController(i);
     const gripSpace = renderer.xr.getControllerGrip(i);
     const mesh = controllerModelFactory.createControllerModel(gripSpace);
-    const group = new THREE.Group();
+
     gripSpace.add(mesh);
     player.add(raySpace, gripSpace);
     raySpace.visible = false;
@@ -132,14 +136,14 @@ function createControllers(player, renderer) {
         raySpace,
         gripSpace,
         mesh,
-        gamepad: new GamepadWrapper(e.data.gamepad),
+        gamepad: new GamepadWrapper(e.data.gamepad as Gamepad),
       };
     });
     gripSpace.addEventListener('disconnected', (e) => {
       raySpace.visible = false;
       gripSpace.visible = false;
       const handedness = e.data.handedness;
-      controllers[handedness] = null;
+      controllers[handedness] = undefined;
     });
   }
   return controllers;
