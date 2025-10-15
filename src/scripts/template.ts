@@ -1,36 +1,50 @@
 import type {Sizes, ControllerType, Controllers, Globals }  from './types.ts'
-import * as THREE from 'three'; //import Three.js
 import * as HELPER from './helpers.js';
 
+import * as THREE from 'three'; //import Three.js
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'; //Loader for assets
 import { GamepadWrapper, XR_BUTTONS, XR_AXES } from 'gamepad-wrapper'; //Gamepad input controls
 import { gsap } from 'gsap'; //Js library to simplify animation
+import { roughness } from 'three/tsl';
 
 export function addTemplateObjects(scene : THREE.Scene) {
-  // Add die
-
-  var loader = new THREE.TextureLoader();
-  var diePaths = ['die/1.jpg', 'die/6.jpg', 'die/5.jpg', 'die/2.jpg', 'die/3.jpg', 'die/4.jpg'];
-  const materials = diePaths.map((path) => new THREE.MeshStandardMaterial({ map: loader.load(path) }));
+  //Add die
+  const gltfLoader = new GLTFLoader();
+  const textureLoader = new THREE.TextureLoader();
+  const diePaths = ['die/1.jpg', 'die/6.jpg', 'die/5.jpg', 'die/2.jpg', 'die/3.jpg', 'die/4.jpg'];
+  const materials = diePaths.map((path) => new THREE.MeshStandardMaterial({ map: textureLoader.load(path) }));
   const die = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), materials);
   die.receiveShadow = true;
   die.position.set(0, 1, -1);
   die.userData.interactable = true;
   scene.add(die);
 
-  // Basic lighting
+  //Extra lighting
   const dirLight = new THREE.DirectionalLight(0xff0000, 0.5);
   dirLight.position.set(5, 5, 5);
   dirLight.lookAt(0, 0, 0);
   scene.add(dirLight);
 
-  // Ground plane
+  //Ground plane
   const floorGeometry = new THREE.PlaneGeometry(100, 100);
-  const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x975c35, roughness: 0.8 });
-  const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+  const grassTexture = textureLoader.load('grass.png');
+  const grassMaterial = new THREE.MeshStandardMaterial({map:grassTexture, color : 0xD0D0D0 , roughness:0.8});
+  
+  grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
+  grassTexture.repeat.set(20, 20);
+
+  const floor = new THREE.Mesh(floorGeometry, grassMaterial);
   floor.position.setY(0);
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
   scene.add(floor);
+
+  // Add skybox 
+  gltfLoader.load('skybox.glb', (gltf) => {
+    const skybox = gltf.scene;
+    skybox.scale.set(10, 10, 10);
+    scene.add(skybox);
+  });
 }
 
 export function addTemplateMovement(player:THREE.Group, camera : THREE.Camera, controllers : Controllers) {

@@ -73,7 +73,6 @@ function setupGlobals() : Globals{
 
   //Setup Scene
   const scene = new THREE.Scene();
-
   //Setup Camera
   const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 100);
   camera.position.set(0, 1.7, 3);
