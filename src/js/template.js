@@ -8,14 +8,7 @@ export function addTemplateObjects(scene) {
   // Add die
 
   var loader = new THREE.TextureLoader();
-  var diePaths = [
-    'https://th.bing.com/th/id/OIP.OB8xNviXvEcA3WNU-7RIRQHaHa?w=228&h=219&c=7&o=5&pid=1.7',
-    'https://th.bing.com/th/id/OIP.osXPM7NHeNro5XF3MDVZWgHaHa?w=213&h=213&c=7&o=5&pid=1.7',
-    'https://th.bing.com/th/id/OIP.eolV3-TnCn6QrLAuuAa5zAHaHa?w=206&h=203&c=7&o=5&pid=1.7',
-    'https://th.bing.com/th/id/OIP.eM85mOKZcT8ufGMqUVxKmAHaHa?w=230&h=220&c=7&o=5&pid=1.7',
-    'https://th.bing.com/th/id/OIP.sMkR0TyI2E7vER-CZFe-awHaHa?w=224&h=219&c=7&o=5&pid=1.7',
-    'https://th.bing.com/th/id/OIP.Pn_7h3NqUQTVrQF4wn1YkQHaHa?w=218&h=208&c=7&o=5&pid=1.7',
-  ];
+  var diePaths = ['/die/1.jpg', '/die/6.jpg', '/die/5.jpg', '/die/2.jpg', '/die/3.jpg', '/die/4.jpg'];
   const materials = diePaths.map((path) => new THREE.MeshStandardMaterial({ map: loader.load(path) }));
   const die = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), materials);
   die.receiveShadow = true;
