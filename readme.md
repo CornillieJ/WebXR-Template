@@ -1,5 +1,6 @@
 # WebXR with Three.Js template
-> Made in Typescript. Older Javascript version is available on the legacy/javascript branch
+> Made in Typescript. Older Javascript version is available on the legacy/javascript branch  
+
 This is a template I made that has all the boilerplate code for a WebXR game.
 For this template I implemented ideas from the official Meta XR tutorial, combined with best practices from both Three.Js Journey and my university 'Howest'.  
   
