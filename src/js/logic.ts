@@ -1,3 +1,4 @@
+import type {Sizes, ControllerType, Controllers, Globals }  from './types.ts'
 import * as THREE from 'three'; //import Three.js
 
 import * as TEMPLATE from './template.js'; //import template code
@@ -12,28 +13,36 @@ function Initialize() {
   init(setupScene, onFrame);
 }
 
-function setupScene({ canvas, scene, camera, renderer, player, controllers }) {
-  //Sample code I made, delete this before starting
-  TEMPLATE.addTemplateObjects(scene);
+function setupScene(globals : Globals) {
+
+  //#region Samples
+  TEMPLATE.addTemplateObjects(globals.scene);
+  //#endregion Samples
+
 
   /* Load and add assets to set up the base scene here:
-
   const gltfLoader = new GLTFLoader();
   gltfLoader.load('PATH_TO_ASSET', (gltf)=>{
    	scene.add(gltf.scene);
   });
-
   */
+
 }
 
-function onFrame(delta, time, { canvas, scene, camera, renderer, player, controllers }) {
+function onFrame(delta : number, time : number, globals: Globals) {
   //Logic to run each frame
 
-  //Sample code I made, delete this before starting
+
+  // deconstruct Globals
+  const { canvas, scene, camera, renderer, player, controllers } = globals;
+
+
+  //#region Samples
   TEMPLATE.addTemplateMovement(player, camera, controllers);
-  TEMPLATE.addTemplateRotation(player, camera, controllers);
+  TEMPLATE.addTemplateRotation(player, controllers);
   TEMPLATE.addTemplateJump(player, controllers);
   TEMPLATE.addTemplateInteraction(scene, controllers);
+  //#endregion Samples
 
-  gsap.ticker.tick(delta); //Keep animations synced with game loop
+  gsap.ticker.tick(); //Keep animations synced with game loop
 }

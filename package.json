@@ -13,6 +13,10 @@
     "build": "vite build"
   },
   "devDependencies": {
+    "@types/gsap": "^3.0.0",
+    "@types/node": "^24.7.2",
+    "@types/three": "^0.180.0",
+    "typescript": "^5.9.3",
     "vite": "^6.2.2",
     "vite-plugin-mkcert": "^1.17.9",
     "vite-plugin-restart": "^0.4.2"

@@ -1,11 +1,13 @@
+import type {Sizes, ControllerType, Controllers, Globals }  from './types.ts'
+
 import * as THREE from 'three'; //import Three.js
 
-export function checkControllerOverlap(controller, interactableObjects) {
+export function checkControllerOverlap(controller : ControllerType , interactableObjects : THREE.Object3D[]) {
   // Update bounding box for controller mesh
   const controllerBox = new THREE.Box3().setFromObject(controller.mesh);
 
   for (const obj of interactableObjects) {
-    if (obj && obj.isMesh) {
+    if (obj && obj instanceof THREE.Mesh) {
       // Update bounding box for object
       const objectBox = new THREE.Box3().setFromObject(obj);
 
@@ -18,7 +20,7 @@ export function checkControllerOverlap(controller, interactableObjects) {
   return null;
 }
 
-export function getWorldPositionAndRotation(object) {
+export function getWorldPositionAndRotation(object : THREE.Object3D) {
   const worldPosition = new THREE.Vector3();
   object.getWorldPosition(worldPosition);
 
@@ -27,7 +29,7 @@ export function getWorldPositionAndRotation(object) {
 
   // Convert quaternion to rotation
   const worldEuler = new THREE.Euler();
-  worldEuler.setFromQuaternion(worldQuaternion, 'xyz');
+  worldEuler.setFromQuaternion(worldQuaternion, 'XYZ' as THREE.EulerOrder);
 
   return {
     position: worldPosition,
@@ -36,7 +38,7 @@ export function getWorldPositionAndRotation(object) {
   };
 }
 
-export function getOffsetsBetweenObjects(object1, object2) {
+export function getOffsetsBetweenObjects(object1 : THREE.Object3D, object2 : THREE.Object3D) {
   const object1Position = new THREE.Vector3();
   object1.getWorldPosition(object1Position);
   const object2Position = new THREE.Vector3();
@@ -52,7 +54,7 @@ export function getOffsetsBetweenObjects(object1, object2) {
   const relativeQuaternion = object1Quaternion.clone().invert().multiply(object2Quaternion);
 
   const relativeRotation = new THREE.Euler();
-  relativeRotation.setFromQuaternion(relativeQuaternion, 'xyz');
+  relativeRotation.setFromQuaternion(relativeQuaternion, 'XYZ' as THREE.EulerOrder);
 
   return {
     rotationOffset: relativeRotation,
