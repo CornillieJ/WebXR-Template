@@ -3,7 +3,6 @@ import * as THREE from 'three'; //import Three.js
 import * as TEMPLATE from './template.js'; //import template code
 
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'; //Loader for assets
-import { Text } from 'troika-three-text'; // Three.js text
 import { GamepadWrapper, XR_BUTTONS, XR_AXES } from 'gamepad-wrapper'; //Gamepad input controls
 import { gsap } from 'gsap'; //Js library to simplify animation
 import { init } from './init.js'; //init script
