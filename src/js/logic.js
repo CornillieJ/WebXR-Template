@@ -31,6 +31,7 @@ function onFrame(delta, time, { canvas, scene, camera, renderer, player, control
 
   //Sample code I made, delete this before starting
   TEMPLATE.addTemplateMovement(player, camera, controllers);
+  TEMPLATE.addTemplateRotation(player, camera, controllers);
   TEMPLATE.addTemplateJump(player, controllers);
   TEMPLATE.addTemplateInteraction(scene, controllers);
 

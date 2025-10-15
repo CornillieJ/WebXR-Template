@@ -46,7 +46,6 @@ export function addTemplateMovement(player, camera, controllers) {
   //Get forward vector
   const forward = new THREE.Vector3();
   camera.getWorldDirection(forward);
-  console.log(forward);
   forward.y = 0; // looking up or down should not affect movement
   forward.normalize(); //normalize to 1
 
@@ -61,6 +60,31 @@ export function addTemplateMovement(player, camera, controllers) {
   // Add movement to player position
   player.position.add(moveX);
   player.position.add(moveZ);
+}
+
+export function addTemplateRotation(player, camera, controllers) {
+  if (!controllers.right) return;
+
+  const x = controllers.right.gamepad.getAxis(XR_AXES.THUMBSTICK_X);
+  const deadzone = 0.6;
+  const returnZone = 0.5;
+
+  //Reset turning when returned to returnZone
+  if (Math.abs(x) < returnZone && player.userData.turning) {
+    player.userData.turning = false;
+    return;
+  }
+
+  //ignore small movements and if user holds joystick outside of return zone (single snapping)
+  if (Math.abs(x) < deadzone || player.userData.turning) return;
+
+  const angleInDegrees = 15;
+  const angleInRadians = THREE.MathUtils.degToRad(angleInDegrees);
+
+  const axis = new THREE.Vector3(0, Math.sign(-x), 0); //Get correct direction
+
+  player.rotateOnAxis(axis, angleInRadians);
+  player.userData.turning = true;
 }
 
 export function addTemplateJump(player, controllers) {
