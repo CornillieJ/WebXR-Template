@@ -4,6 +4,7 @@ import mkcert from 'vite-plugin-mkcert';
 export default {
   root: 'src/', // Sources files (typically where index.html is)
   publicDir: '../static/', // Path from "root" to static assets
+  base: './',
   server: {
     host: true, // Open to local network and display URL
     https: true,
