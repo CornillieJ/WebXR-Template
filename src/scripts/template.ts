@@ -136,40 +136,50 @@ export function addTemplateJump(player:THREE.Group, controllers : Controllers) {
 export function addTemplateInteraction(scene : THREE.Scene, controllers : Controllers) {
   if (!controllers.right && !controllers.left) return;
 
-  const interactableObjects : THREE.Object3D[] = [];
-  scene.traverse((object) => {
-    if (object.userData && object.userData.interactable) {
-      interactableObjects.push(object);
-    }
-  });
+  const interactableObjects = HELPER.getInteractableObjects(scene);
 
   Object.values(controllers).forEach((controller) => {
     const grabStarted = controller.gamepad.getButtonDown(XR_BUTTONS.SQUEEZE);
-    const grabHeld = controller.gamepad.getButton(XR_BUTTONS.SQUEEZE);
+    const grabHeldDown = controller.gamepad.getButton(XR_BUTTONS.SQUEEZE);
 
     if (grabStarted) {
       const intersectedObject = HELPER.checkControllerOverlap(controller, interactableObjects);
-
-      if (intersectedObject && !controller.mesh.userData?.grabbedObject) {
-        const grabbedObject = intersectedObject;
-        controller.mesh.userData.grabbedObject = grabbedObject;
-
-        const offsetData = HELPER.getOffsetsBetweenObjects(controller.raySpace, grabbedObject);
-        controller.raySpace.add(grabbedObject);
-        grabbedObject.position.copy(offsetData.positionOffset);
-        grabbedObject.quaternion.copy(offsetData.quaternionOffset);
-      }
+      holdItem(controller,intersectedObject);
     }
-    if (!grabHeld && controller.mesh.userData.grabbedObject) {
-      const grabbedObject = controller.mesh.userData.grabbedObject;
-      const locationData = HELPER.getWorldPositionAndRotation(grabbedObject);
-
-      controller.raySpace.remove(grabbedObject);
-      controller.mesh.userData.grabbedObject = null;
-
-      grabbedObject.position.copy(locationData.position);
-      grabbedObject.quaternion.copy(locationData.quaternion);
-      scene.add(grabbedObject);
-    }
+    if (!grabHeldDown)
+      letGoOfItem(scene,controller);
   });
+}
+
+function holdItem(controller : ControllerType, itemToHold : THREE.Object3D | undefined){
+  if (controller.heldItem || !itemToHold ) return;
+
+  controller.heldItem = itemToHold;
+  //Get offset controller <-> item
+  const offsetData = HELPER.getOffsetsBetweenObjects(controller.gripSpace, itemToHold);
+
+  const itemWorldPos = new THREE.Vector3();
+  itemToHold.getWorldPosition(itemWorldPos);
+
+  //Add item to controller and set location relative to hand
+  // controller.gripSpace.worldToLocal(itemWorldPos);
+  // itemToHold.position.copy(itemWorldPos);
+
+  controller.gripSpace.add(itemToHold);
+  itemToHold.position.copy(offsetData.positionOffset);
+  itemToHold.quaternion.copy(offsetData.quaternionOffset);
+}
+
+function letGoOfItem(scene : THREE.Scene, controller : ControllerType){
+  if(!controller.heldItem) return;
+  //get item world position
+  const locationData = HELPER.getWorldPositionAndRotation(controller.heldItem);
+  controller.gripSpace.remove(controller.heldItem);
+  //Add item to world relative to world 0
+  controller.heldItem.position.copy(locationData.position);
+  controller.heldItem.quaternion.copy(locationData.quaternion);
+  scene.add(controller.heldItem);
+
+  //remove from hand
+  controller.heldItem = undefined;
 }

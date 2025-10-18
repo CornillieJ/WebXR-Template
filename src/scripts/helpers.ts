@@ -2,7 +2,7 @@ import type {Sizes, ControllerType, Controllers, Globals }  from './types.ts'
 
 import * as THREE from 'three'; //import Three.js
 
-export function checkControllerOverlap(controller : ControllerType , interactableObjects : THREE.Object3D[]) {
+export function checkControllerOverlap(controller : ControllerType , interactableObjects : THREE.Object3D[]) : THREE.Object3D | undefined {
   // Update bounding box for controller mesh
   const controllerBox = new THREE.Box3().setFromObject(controller.mesh);
 
@@ -17,10 +17,11 @@ export function checkControllerOverlap(controller : ControllerType , interactabl
       }
     }
   }
-  return null;
+  return undefined;
 }
 
-export function getWorldPositionAndRotation(object : THREE.Object3D) {
+export function getWorldPositionAndRotation(object : THREE.Object3D) 
+: {position: THREE.Vector3; rotation: THREE.Euler; quaternion: THREE.Quaternion} {
   const worldPosition = new THREE.Vector3();
   object.getWorldPosition(worldPosition);
 
@@ -38,27 +39,46 @@ export function getWorldPositionAndRotation(object : THREE.Object3D) {
   };
 }
 
-export function getOffsetsBetweenObjects(object1 : THREE.Object3D, object2 : THREE.Object3D) {
-  const object1Position = new THREE.Vector3();
-  object1.getWorldPosition(object1Position);
+export function getOffsetsBetweenObjects(startObject : THREE.Object3D, object2 : THREE.Object3D) 
+: {positionOffset: THREE.Vector3; rotationOffset: THREE.Euler; quaternionOffset: THREE.Quaternion} {
+  const startObjectPosition = new THREE.Vector3();
+  startObject.getWorldPosition(startObjectPosition);
   const object2Position = new THREE.Vector3();
   object2.getWorldPosition(object2Position);
-  // Offset location from object1 to object2 in world space
-  const offsetVector = new THREE.Vector3().subVectors(object2Position, object1Position);
+  // Offset location from startObject to object2 in world space
+  const offsetVector = startObject.worldToLocal(object2Position);
 
-  const object1Quaternion = new THREE.Quaternion();
-  object1.getWorldQuaternion(object1Quaternion);
+
+  const startObjectQuaternion = new THREE.Quaternion();
+  startObject.getWorldQuaternion(startObjectQuaternion);
   const object2Quaternion = new THREE.Quaternion();
   object2.getWorldQuaternion(object2Quaternion);
-  // Offset quaternion from object1 to object2 in world space
-  const relativeQuaternion = object1Quaternion.clone().invert().multiply(object2Quaternion);
+  // Offset quaternion from startObject to object2 in world space
+  const relativeQuaternion = startObjectQuaternion.clone().invert().multiply(object2Quaternion);
 
   const relativeRotation = new THREE.Euler();
   relativeRotation.setFromQuaternion(relativeQuaternion, 'XYZ' as THREE.EulerOrder);
 
   return {
-    rotationOffset: relativeRotation,
     positionOffset: offsetVector,
+    rotationOffset: relativeRotation,
     quaternionOffset: relativeQuaternion,
   };
+}
+
+export function exists(item : THREE.Object3D | undefined) : boolean{
+  return item !== undefined;
+}
+export function isItemHeld(controller : ControllerType) : boolean{
+  return controller.heldItem !== undefined;
+}
+
+export function getInteractableObjects(scene : THREE.Scene) : THREE.Object3D[]{
+  const interactableObjects : THREE.Object3D[] = [];
+  scene.traverse((object) => {
+    if (object.userData && object.userData.interactable) {
+      interactableObjects.push(object);
+    }
+  });
+  return interactableObjects;
 }

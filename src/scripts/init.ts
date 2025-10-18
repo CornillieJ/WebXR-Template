@@ -135,6 +135,7 @@ function createControllers(player :  THREE.Group, renderer : THREE.WebGLRenderer
         raySpace,
         gripSpace,
         mesh,
+        heldItem: undefined,
         gamepad: new GamepadWrapper(e.data.gamepad as Gamepad),
       };
     });

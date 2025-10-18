@@ -25,5 +25,6 @@ export type ControllerType = {
   raySpace: THREE.Object3D;
   gripSpace: THREE.Object3D;
   mesh: THREE.Object3D;
+  heldItem: THREE.Object3D | undefined;
   gamepad: GamepadWrapper;
 };
