@@ -2,9 +2,11 @@ import * as THREE from 'three'; //Three.js
 import { GamepadWrapper } from 'gamepad-wrapper'; //Gamepad input controls
 
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'; //mouse+kb controls
+import { FirstPersonControls } from 'three/addons/controls/FirstPersonControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'; //Official add-on for a room environment
 import { VRButton } from 'three/addons/webxr/VRButton.js'; //Add button to enter VR mode
 import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory.js'; //3D models for controllers
+import Stats from 'stats.js'
 
 export function init(setupScene = (globals:Globals) => {}, onFrame = (delta:number,time:number,globals:Globals) => {}) {
   const globals = setupGlobals();
@@ -13,9 +15,14 @@ export function init(setupScene = (globals:Globals) => {}, onFrame = (delta:numb
   window.addEventListener('resize', () => updateSizes(globals));
 
   //Set up orbitControls
-  const controls = new OrbitControls(globals.camera, globals.canvas);
-  controls.target.set(0, 1.6, 0);
-  controls.update();
+  // const controls = new OrbitControls(globals.camera, globals.canvas);
+  //controls.target.set(0, 1.6, 0);
+  //controls.update();
+  const controls = new FirstPersonControls(globals.camera, globals.canvas);
+  controls.movementSpeed = 2;
+  controls.lookSpeed = 0.2;
+  controls.lookVertical = true;
+
 
   //Add VR button
   document.body.appendChild(VRButton.createButton(globals.renderer));
@@ -26,6 +33,7 @@ export function init(setupScene = (globals:Globals) => {}, onFrame = (delta:numb
   //Start main loop
   const clock = new THREE.Clock();
   function animate() {
+    globals.stats.begin();
     const delta = clock.getDelta();
     const time = clock.getElapsedTime();
 
@@ -33,9 +41,11 @@ export function init(setupScene = (globals:Globals) => {}, onFrame = (delta:numb
       if (controller?.gamepad) controller.gamepad?.update();
     });
 
+    controls.update(delta);
     //Run logic from Logic script on every frame
     onFrame(delta, time, globals);
     globals.renderer.render(globals.scene, globals.camera);
+    globals.stats.end();
   }
 
   globals.renderer.setAnimationLoop(animate);
@@ -56,7 +66,8 @@ function updateSizes(globals:Globals) {
 }
 
 function setupGlobals() : Globals{
-  
+  const stats = setupStats();
+
   //Get canvas
   let canvas = document.querySelector('canvas.webgl') as HTMLCanvasElement | null;
   if (!canvas) {
@@ -108,6 +119,7 @@ function setupGlobals() : Globals{
     renderer: renderer,
     player: player,
     controllers: controllers,
+    stats: stats
   }
 
   return globals;
@@ -148,3 +160,10 @@ function createControllers(player :  THREE.Group, renderer : THREE.WebGLRenderer
   }
   return controllers;
 }
+function setupStats() {
+  const stats = new Stats()
+  stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
+  document.body.appendChild(stats.dom)
+  return stats;
+}
+
