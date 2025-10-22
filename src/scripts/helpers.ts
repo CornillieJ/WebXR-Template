@@ -1,5 +1,3 @@
-import type {Sizes, ControllerType, Controllers, Globals }  from './types.ts'
-
 import * as THREE from 'three'; //import Three.js
 
 export function checkControllerOverlap(controller : ControllerType , interactableObjects : THREE.Object3D[]) : THREE.Object3D | undefined {

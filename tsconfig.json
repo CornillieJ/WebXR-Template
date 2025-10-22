@@ -12,7 +12,11 @@
     "target": "esnext",
     // For nodejs:
     "lib": ["esnext", "DOM"],
-    "types": ["node", "three","gsap"],
+    "types": ["node", "three","troika-three-text"],
+    "paths": {
+      "troika-three-text": ["./src/scripts/types/troika-three-text.d.ts"]
+    },
+    "typeRoots": ["./node_modules/@types", "./src/scripts/types"],
     // and npm install -D @types/node
 
     // Other Outputs
@@ -43,5 +47,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
-  }
+  },
+   "include": [
+    "src/**/*"
+  ]
 }

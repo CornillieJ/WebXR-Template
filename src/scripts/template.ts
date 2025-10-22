@@ -1,10 +1,16 @@
-import type {Sizes, ControllerType, Controllers, Globals }  from './types.ts'
+// import type {Sizes, ControllerType, Controllers, Globals }  from './types/types.js'
 import * as HELPER from './helpers.js';
 
 import * as THREE from 'three'; //import Three.js
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'; //Loader for assets
 import { GamepadWrapper, XR_BUTTONS, XR_AXES } from 'gamepad-wrapper'; //Gamepad input controls
 import { gsap } from 'gsap'; //Js library to simplify animation
+import { RoundedBoxGeometry } from 'three-stdlib';
+
+//packages without types
+// @ts-ignore
+import {Text} from 'troika-three-text'; //Library for text in ThreeJs
+import { color } from 'three/tsl';
 
 export function addTemplateObjects(scene : THREE.Scene) {
   //Add die
@@ -45,8 +51,6 @@ export function addTemplateObjects(scene : THREE.Scene) {
   floor.receiveShadow = true;
   floor.userData.isCollider = true;
   scene.add(floor);
-  console.log('floor:')
-  console.log(floor.position)
 
   // Add skybox 
   gltfLoader.load('skybox.glb', (gltf) => {
@@ -204,3 +208,61 @@ export function addTemplatePhysics(scene: THREE.Scene, deltaTime: number ,gravit
 
   });
 }
+
+
+export function showTextPanel(scene: THREE.Scene, panel: THREE.Mesh, textInfo: TextInfo) {
+  const output = new Text();
+  output.fontWeight = textInfo.fontWeight;
+  output.textAlign = textInfo.innerTextAlign;
+  output.fontSize = textInfo.fontSize?? 0.24;
+  output.color = textInfo.color??0xffffff;
+  output.text = textInfo.text ?? '';
+  output.position.z = (panel.userData.depth/2) + 0.01;
+
+  const outputGroup = new THREE.Group();
+  outputGroup.position.copy(panel.position);
+  outputGroup.rotation.copy(panel.rotation);
+  panel.position.set(0,0,0);
+  panel.rotation.set(0,0,0);
+  outputGroup.add(panel)
+  outputGroup.add(output);
+  scene.add(outputGroup)
+
+  setJustificationAndAlignment(panel, output, textInfo);
+  output.sync();
+
+  return outputGroup;
+}
+
+export function CreatePanel(objectInfo:ObjectInfo) {
+  const panel = new THREE.Mesh(
+    new RoundedBoxGeometry(objectInfo.width, objectInfo.height, objectInfo.depth, 5, 5),
+    new THREE.MeshBasicMaterial(objectInfo.parameters)
+  );
+
+  panel.userData.width = objectInfo.width;
+  panel.userData.height = objectInfo.height;
+  panel.userData.depth = objectInfo.depth;
+
+  panel.position.copy(objectInfo.position ?? new THREE.Vector3(0,0,0));
+  panel.rotation.copy(objectInfo.rotation ?? new THREE.Euler(0,0,0));
+
+  return panel;
+}
+
+function setJustificationAndAlignment(panel:THREE.Mesh, output: Text, textInfo: TextInfo) {
+  let outputSize= new THREE.Vector3();
+  const outputBox = new THREE.Box3().setFromObject(output).getSize(outputSize);
+
+  const margin = .05;
+
+  if (textInfo.justification === 'center')
+    output.anchorX = '50%';
+  if (textInfo.alignment === 'center')
+    output.anchorY = '50%';
+  if (textInfo.justification === 'start')
+    output.position.x = -(panel.userData.width/2) + margin;
+  if (textInfo.alignment === 'start')
+    output.position.y = (panel.userData.height/2) - margin;
+}
+
