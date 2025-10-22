@@ -5,7 +5,6 @@ import * as THREE from 'three'; //import Three.js
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'; //Loader for assets
 import { GamepadWrapper, XR_BUTTONS, XR_AXES } from 'gamepad-wrapper'; //Gamepad input controls
 import { gsap } from 'gsap'; //Js library to simplify animation
-import { roughness } from 'three/tsl';
 
 export function addTemplateObjects(scene : THREE.Scene) {
   //Add die
@@ -17,7 +16,14 @@ export function addTemplateObjects(scene : THREE.Scene) {
   die.receiveShadow = true;
   die.position.set(0, 1, -1);
   die.userData.interactable = true;
+  die.userData.hasPhysics = true;
   scene.add(die);
+  const die2 = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), materials);
+  die2.receiveShadow = true;
+  die2.position.set(0, 1, -3);
+  die2.userData.interactable = true;
+  die2.userData.hasPhysics = true;
+  scene.add(die2);
 
   //Extra lighting
   const dirLight = new THREE.DirectionalLight(0xff0000, 0.5);
@@ -37,7 +43,10 @@ export function addTemplateObjects(scene : THREE.Scene) {
   floor.position.setY(0);
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
+  floor.userData.isCollider = true;
   scene.add(floor);
+  console.log('floor:')
+  console.log(floor.position)
 
   // Add skybox 
   gltfLoader.load('skybox.glb', (gltf) => {
@@ -136,50 +145,62 @@ export function addTemplateJump(player:THREE.Group, controllers : Controllers) {
 export function addTemplateInteraction(scene : THREE.Scene, controllers : Controllers) {
   if (!controllers.right && !controllers.left) return;
 
-  const interactableObjects = HELPER.getInteractableObjects(scene);
+  const interactableObjects = HELPER.getObjectsWithFeature(scene,'interactable');
 
-  Object.values(controllers).forEach((controller) => {
+  Object.values(controllers)
+    .filter(controller=>controller !== undefined)
+    .forEach((controller) => {
     const grabStarted = controller.gamepad.getButtonDown(XR_BUTTONS.SQUEEZE);
     const grabHeldDown = controller.gamepad.getButton(XR_BUTTONS.SQUEEZE);
 
     if (grabStarted) {
       const intersectedObject = HELPER.checkControllerOverlap(controller, interactableObjects);
-      holdItem(controller,intersectedObject);
+      HELPER.holdItem(controller,intersectedObject);
     }
-    if (!grabHeldDown)
-      letGoOfItem(scene,controller);
+    else if (!grabHeldDown){
+      HELPER.letGoOfItem(scene,controller);
+    }
   });
 }
 
-function holdItem(controller : ControllerType, itemToHold : THREE.Object3D | undefined){
-  if (controller.heldItem || !itemToHold ) return;
+export function addTemplatePhysics(scene: THREE.Scene, deltaTime: number ,gravity: number = -9.81) {
+  const hasPhysicsObjects = HELPER.getObjectsWithFeature(scene,'hasPhysics');
+  const colliderObjects = HELPER.getObjectsWithFeature(scene, 'isCollider');
+  const allPhysicsObjects =  [...hasPhysicsObjects,...colliderObjects];
 
-  controller.heldItem = itemToHold;
-  //Get offset controller <-> item
-  const offsetData = HELPER.getOffsetsBetweenObjects(controller.gripSpace, itemToHold);
+  hasPhysicsObjects.forEach(obj => {
+    if(obj.userData.isHeld){
+      obj.userData.velocity = new THREE.Vector3(0, 0, 0);
+      return;
+    }
 
-  const itemWorldPos = new THREE.Vector3();
-  itemToHold.getWorldPosition(itemWorldPos);
+    obj.userData.velocity ??= new THREE.Vector3(0, 0, 0); //new if not present
 
-  //Add item to controller and set location relative to hand
-  // controller.gripSpace.worldToLocal(itemWorldPos);
-  // itemToHold.position.copy(itemWorldPos);
+    const groundLevel = 0;
+    const previousPosition = obj.position.clone();
+    const previousRotation = obj.rotation.clone();
+    const objBox = new THREE.Box3().setFromObject(obj);
+    const bottomY = objBox.min.y;
+    const velocity: THREE.Vector3 = obj.userData.velocity;
 
-  controller.gripSpace.add(itemToHold);
-  itemToHold.position.copy(offsetData.positionOffset);
-  itemToHold.quaternion.copy(offsetData.quaternionOffset);
-}
+    if (bottomY <= groundLevel) { // No gravity if on ground
+      const offsetY = obj.position.y - bottomY; // distance from position to bottom
+      obj.position.y = offsetY;
+      obj.userData.velocity.y = 0;  // stop downward velocity
+      return;
+    }
 
-function letGoOfItem(scene : THREE.Scene, controller : ControllerType){
-  if(!controller.heldItem) return;
-  //get item world position
-  const locationData = HELPER.getWorldPositionAndRotation(controller.heldItem);
-  controller.gripSpace.remove(controller.heldItem);
-  //Add item to world relative to world 0
-  controller.heldItem.position.copy(locationData.position);
-  controller.heldItem.quaternion.copy(locationData.quaternion);
-  scene.add(controller.heldItem);
+    // Add simple vertical gravity
+    velocity.y += gravity * deltaTime;
 
-  //remove from hand
-  controller.heldItem = undefined;
+    // Update position based on velocity
+    obj.position.addScaledVector(velocity, deltaTime);
+
+
+    //For each object, check collision with all other objects
+    HELPER.checkCollision(obj, previousPosition, allPhysicsObjects);
+    obj.userData.lastSafePosition = previousPosition;
+    obj.userData.lastSafeRotation = previousRotation;
+
+  });
 }

@@ -73,12 +73,100 @@ export function isItemHeld(controller : ControllerType) : boolean{
   return controller.heldItem !== undefined;
 }
 
-export function getInteractableObjects(scene : THREE.Scene) : THREE.Object3D[]{
-  const interactableObjects : THREE.Object3D[] = [];
+export function getObjectsWithFeature(scene: THREE.Scene,feature: string): THREE.Object3D[] {
+  const objectsWithFeature: THREE.Object3D[] = [];
   scene.traverse((object) => {
-    if (object.userData && object.userData.interactable) {
-      interactableObjects.push(object);
+    if ( object.userData && object.userData[feature] ) {
+      objectsWithFeature.push(object);
     }
   });
-  return interactableObjects;
+  return objectsWithFeature;
+}
+
+
+
+export function holdItem(controller : ControllerType, itemToHold : THREE.Object3D | undefined){
+  if (controller.heldItem || !itemToHold ) return;
+
+  controller.heldItem = itemToHold;
+  itemToHold.userData.isHeld = true;
+  //Get offset controller <-> item
+  const offsetData = getOffsetsBetweenObjects(controller.gripSpace, itemToHold);
+
+  const itemWorldPos = new THREE.Vector3();
+  itemToHold.getWorldPosition(itemWorldPos);
+
+  //Add item to controller and set location relative to hand
+  controller.gripSpace.add(itemToHold);
+  itemToHold.position.copy(offsetData.positionOffset);
+  itemToHold.quaternion.copy(offsetData.quaternionOffset);
+}
+
+export function letGoOfItem(scene : THREE.Scene, controller : ControllerType){
+  if(!controller.heldItem) return;
+  //get item world position
+  const locationData = getWorldPositionAndRotation(controller.heldItem);
+  //Add item to world relative to world 0
+  controller.heldItem.position.copy(locationData.position);
+  controller.heldItem.quaternion.copy(locationData.quaternion);
+  scene.add(controller.heldItem);
+
+  //remove from hand
+  controller.gripSpace.remove(controller.heldItem);
+  controller.heldItem.userData.isHeld = false;
+  controller.heldItem = undefined;
+}
+export function checkGroundCollision(obj: THREE.Object3D, physicsObjects: THREE.Object3D[]) {
+  //get boundedbox
+  const objBox = new THREE.Box3().setFromObject(obj);
+  for (const other of physicsObjects) {
+    if (other === obj) continue;
+    //get boundedbox
+    const otherBox = new THREE.Box3().setFromObject(other);
+
+    // Check vertical alignment (other is below obj)
+    const isBelow =
+      otherBox.max.y <= objBox.min.y &&
+      objBox.min.y + obj.userData.velocity.y >= otherBox.max.y; // Predict next frame
+
+    if (isBelow && objBox.intersectsBox(otherBox)) {
+      // Snap obj on top of other
+      obj.position.y = otherBox.max.y;
+
+      // Reset vertical velocity
+      obj.userData.velocity.y = 0;
+      return true;
+    }
+  }
+  return false;
+}
+export function checkCollision(obj: THREE.Object3D, previousPosition: THREE.Vector3, others: THREE.Object3D[]) : boolean {
+  const objBox = new THREE.Box3().setFromObject(obj);
+
+  for (const other of others) {
+    if (other === obj) continue;
+
+    const otherBox = new THREE.Box3().setFromObject(other);
+    if (objBox.intersectsBox(otherBox)){
+      MoveObjectBeforeCollision(obj, otherBox, previousPosition);
+    }
+  }
+  return false;
+}
+
+function MoveObjectBeforeCollision(object: THREE.Object3D, otherBox: THREE.Box3, previousPosition: THREE.Vector3) {
+
+  const movement = new THREE.Vector3().subVectors(object.position, previousPosition);
+  const stepBack = movement.clone().multiplyScalar(-0.1); //stepSize
+  const maxSteps = 20;
+
+  for (let steps = 0; steps <= maxSteps; steps++) {
+    // take small step back
+    object.position.add(stepBack);
+    const newBox = new THREE.Box3().setFromObject(object);
+    if (!newBox.intersectsBox(otherBox)) return; //Found position without collision
+  }
+
+  object.position.copy(object.userData.lastSafePosition); //No collisionless position found, move back to previous position
+  object.rotation.copy(object.userData.lastSafeRotation); //No collisionless position found, move back to previous position and rotation
 }
