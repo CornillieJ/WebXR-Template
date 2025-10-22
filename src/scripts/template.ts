@@ -217,7 +217,7 @@ export function showTextPanel(scene: THREE.Scene, panel: THREE.Mesh, textInfo: T
   output.fontSize = textInfo.fontSize?? 0.24;
   output.color = textInfo.color??0xffffff;
   output.text = textInfo.text ?? '';
-  output.position.z = (panel.userData.depth/2) + 0.01;
+  output.position.z = (panel.userData.depth/2) + 0.001;
 
   const outputGroup = new THREE.Group();
   outputGroup.position.copy(panel.position);

@@ -8,21 +8,17 @@ import { VRButton } from 'three/addons/webxr/VRButton.js'; //Add button to enter
 import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory.js'; //3D models for controllers
 import Stats from 'stats.js'
 
+let mouseInside = false;
+
 export function init(setupScene = (globals:Globals) => {}, onFrame = (delta:number,time:number,globals:Globals) => {}) {
   const globals = setupGlobals();
 
   //Handle resize event
   window.addEventListener('resize', () => updateSizes(globals));
 
-  //Set up orbitControls
-  // const controls = new OrbitControls(globals.camera, globals.canvas);
-  //controls.target.set(0, 1.6, 0);
-  //controls.update();
-  const controls = new FirstPersonControls(globals.camera, globals.canvas);
-  controls.movementSpeed = 2;
-  controls.lookSpeed = 0.2;
-  controls.lookVertical = true;
-
+  //Set up controls
+  //const controls = setUpOrbitControls(globals.camera, globals.canvas);
+  const controls = setupFirstPersonControls(globals.camera, globals.canvas);
 
   //Add VR button
   document.body.appendChild(VRButton.createButton(globals.renderer));
@@ -41,7 +37,7 @@ export function init(setupScene = (globals:Globals) => {}, onFrame = (delta:numb
       if (controller?.gamepad) controller.gamepad?.update();
     });
 
-    controls.update(delta);
+    if (mouseInside) controls.update(delta);
     //Run logic from Logic script on every frame
     onFrame(delta, time, globals);
     globals.renderer.render(globals.scene, globals.camera);
@@ -167,3 +163,22 @@ function setupStats() {
   return stats;
 }
 
+function setUpOrbitControls(camera: THREE.Camera,canvas : HTMLElement){
+  const controls = new OrbitControls(camera, canvas);
+  controls.target.set(0, 1.6, 0);
+  controls.update();
+  return controls;
+}
+function setupFirstPersonControls(camera: THREE.Camera,canvas : HTMLElement){
+  const controls = new FirstPersonControls(camera, canvas);
+  controls.movementSpeed = 2;
+  controls.lookSpeed = 0.1;
+  controls.lookVertical = true;
+  canvas.addEventListener('click',()=>{
+    mouseInside=true;
+  });
+  canvas.addEventListener('mouseleave',()=>{
+    mouseInside=false;
+  });
+  return controls;
+}
