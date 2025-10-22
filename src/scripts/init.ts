@@ -1,4 +1,3 @@
-import type {Sizes, ControllerType, Controllers, Globals }  from './types.ts'
 import * as THREE from 'three'; //Three.js
 import { GamepadWrapper } from 'gamepad-wrapper'; //Gamepad input controls
 

@@ -1,7 +1,7 @@
-import * as THREE from 'three'; //Three.js
-import { GamepadWrapper } from 'gamepad-wrapper'; //Gamepad input controls
+import type * as THREE from 'three'; //Three.js
+import type { GamepadWrapper } from 'gamepad-wrapper'; //Gamepad input controls
 
-
+declare global{
 export type Sizes = {
   width: number;
   height: number;
@@ -28,3 +28,6 @@ export type ControllerType = {
   heldItem: THREE.Object3D | undefined;
   gamepad: GamepadWrapper;
 };
+
+}
+export {}; //To make module

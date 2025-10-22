@@ -1,10 +1,11 @@
-import type {Sizes, ControllerType, Controllers, Globals }  from './types.ts'
+// import type {Sizes, ControllerType, Controllers, Globals }  from './types/types.js'
 import * as HELPER from './helpers.js';
 
 import * as THREE from 'three'; //import Three.js
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'; //Loader for assets
 import { GamepadWrapper, XR_BUTTONS, XR_AXES } from 'gamepad-wrapper'; //Gamepad input controls
 import { gsap } from 'gsap'; //Js library to simplify animation
+import {Text} from 'troika-three-text'; //Library for text in ThreeJs
 
 export function addTemplateObjects(scene : THREE.Scene) {
   //Add die

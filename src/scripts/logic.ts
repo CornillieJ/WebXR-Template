@@ -1,4 +1,3 @@
-import type {Sizes, ControllerType, Controllers, Globals }  from './types.ts'
 import * as THREE from 'three'; //import Three.js
 
 import * as TEMPLATE from './template.js'; //import template code
