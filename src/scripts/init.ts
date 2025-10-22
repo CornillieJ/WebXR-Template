@@ -142,7 +142,8 @@ function createControllers(player :  THREE.Group, renderer : THREE.WebGLRenderer
     gripSpace.addEventListener('disconnected', (e) => {
       raySpace.visible = false;
       gripSpace.visible = false;
-      const handedness = e.data.handedness;
+      type handedness = 'left' | 'right' | 'none'
+      const handedness : handedness = e.data.handedness as handedness | 'none';
       controllers[handedness] = undefined;
     });
   }
