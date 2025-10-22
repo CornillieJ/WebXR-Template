@@ -172,7 +172,7 @@ function setUpOrbitControls(camera: THREE.Camera,canvas : HTMLElement){
 function setupFirstPersonControls(camera: THREE.Camera,canvas : HTMLElement){
   const controls = new FirstPersonControls(camera, canvas);
   controls.movementSpeed = 2;
-  controls.lookSpeed = 0.2;
+  controls.lookSpeed = 0.1;
   controls.lookVertical = true;
   canvas.addEventListener('click',()=>{
     mouseInside=true;
