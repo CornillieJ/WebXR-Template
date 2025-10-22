@@ -5,7 +5,6 @@ import * as THREE from 'three'; //import Three.js
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'; //Loader for assets
 import { GamepadWrapper, XR_BUTTONS, XR_AXES } from 'gamepad-wrapper'; //Gamepad input controls
 import { gsap } from 'gsap'; //Js library to simplify animation
-import { roughness } from 'three/tsl';
 
 export function addTemplateObjects(scene : THREE.Scene) {
   //Add die
@@ -17,7 +16,14 @@ export function addTemplateObjects(scene : THREE.Scene) {
   die.receiveShadow = true;
   die.position.set(0, 1, -1);
   die.userData.interactable = true;
+  die.userData.hasPhysics = true;
   scene.add(die);
+  const die2 = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), materials);
+  die2.receiveShadow = true;
+  die2.position.set(0, 1, -3);
+  die2.userData.interactable = true;
+  die2.userData.hasPhysics = true;
+  scene.add(die2);
 
   //Extra lighting
   const dirLight = new THREE.DirectionalLight(0xff0000, 0.5);
@@ -37,7 +43,10 @@ export function addTemplateObjects(scene : THREE.Scene) {
   floor.position.setY(0);
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
+  floor.userData.isCollider = true;
   scene.add(floor);
+  console.log('floor:')
+  console.log(floor.position)
 
   // Add skybox 
   gltfLoader.load('skybox.glb', (gltf) => {
@@ -136,40 +145,62 @@ export function addTemplateJump(player:THREE.Group, controllers : Controllers) {
 export function addTemplateInteraction(scene : THREE.Scene, controllers : Controllers) {
   if (!controllers.right && !controllers.left) return;
 
-  const interactableObjects : THREE.Object3D[] = [];
-  scene.traverse((object) => {
-    if (object.userData && object.userData.interactable) {
-      interactableObjects.push(object);
-    }
-  });
+  const interactableObjects = HELPER.getObjectsWithFeature(scene,'interactable');
 
-  Object.values(controllers).forEach((controller) => {
+  Object.values(controllers)
+    .filter(controller=>controller !== undefined)
+    .forEach((controller) => {
     const grabStarted = controller.gamepad.getButtonDown(XR_BUTTONS.SQUEEZE);
-    const grabHeld = controller.gamepad.getButton(XR_BUTTONS.SQUEEZE);
+    const grabHeldDown = controller.gamepad.getButton(XR_BUTTONS.SQUEEZE);
 
     if (grabStarted) {
       const intersectedObject = HELPER.checkControllerOverlap(controller, interactableObjects);
-
-      if (intersectedObject && !controller.mesh.userData?.grabbedObject) {
-        const grabbedObject = intersectedObject;
-        controller.mesh.userData.grabbedObject = grabbedObject;
-
-        const offsetData = HELPER.getOffsetsBetweenObjects(controller.raySpace, grabbedObject);
-        controller.raySpace.add(grabbedObject);
-        grabbedObject.position.copy(offsetData.positionOffset);
-        grabbedObject.quaternion.copy(offsetData.quaternionOffset);
-      }
+      HELPER.holdItem(controller,intersectedObject);
     }
-    if (!grabHeld && controller.mesh.userData.grabbedObject) {
-      const grabbedObject = controller.mesh.userData.grabbedObject;
-      const locationData = HELPER.getWorldPositionAndRotation(grabbedObject);
-
-      controller.raySpace.remove(grabbedObject);
-      controller.mesh.userData.grabbedObject = null;
-
-      grabbedObject.position.copy(locationData.position);
-      grabbedObject.quaternion.copy(locationData.quaternion);
-      scene.add(grabbedObject);
+    else if (!grabHeldDown){
+      HELPER.letGoOfItem(scene,controller);
     }
+  });
+}
+
+export function addTemplatePhysics(scene: THREE.Scene, deltaTime: number ,gravity: number = -9.81) {
+  const hasPhysicsObjects = HELPER.getObjectsWithFeature(scene,'hasPhysics');
+  const colliderObjects = HELPER.getObjectsWithFeature(scene, 'isCollider');
+  const allPhysicsObjects =  [...hasPhysicsObjects,...colliderObjects];
+
+  hasPhysicsObjects.forEach(obj => {
+    if(obj.userData.isHeld){
+      obj.userData.velocity = new THREE.Vector3(0, 0, 0);
+      return;
+    }
+
+    obj.userData.velocity ??= new THREE.Vector3(0, 0, 0); //new if not present
+
+    const groundLevel = 0;
+    const previousPosition = obj.position.clone();
+    const previousRotation = obj.rotation.clone();
+    const objBox = new THREE.Box3().setFromObject(obj);
+    const bottomY = objBox.min.y;
+    const velocity: THREE.Vector3 = obj.userData.velocity;
+
+    if (bottomY <= groundLevel) { // No gravity if on ground
+      const offsetY = obj.position.y - bottomY; // distance from position to bottom
+      obj.position.y = offsetY;
+      obj.userData.velocity.y = 0;  // stop downward velocity
+      return;
+    }
+
+    // Add simple vertical gravity
+    velocity.y += gravity * deltaTime;
+
+    // Update position based on velocity
+    obj.position.addScaledVector(velocity, deltaTime);
+
+
+    //For each object, check collision with all other objects
+    HELPER.checkCollision(obj, previousPosition, allPhysicsObjects);
+    obj.userData.lastSafePosition = previousPosition;
+    obj.userData.lastSafeRotation = previousRotation;
+
   });
 }

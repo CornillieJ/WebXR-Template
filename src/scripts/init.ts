@@ -135,13 +135,15 @@ function createControllers(player :  THREE.Group, renderer : THREE.WebGLRenderer
         raySpace,
         gripSpace,
         mesh,
+        heldItem: undefined,
         gamepad: new GamepadWrapper(e.data.gamepad as Gamepad),
       };
     });
     gripSpace.addEventListener('disconnected', (e) => {
       raySpace.visible = false;
       gripSpace.visible = false;
-      const handedness = e.data.handedness;
+      type handedness = 'left' | 'right' | 'none'
+      const handedness : handedness = e.data.handedness as handedness | 'none';
       controllers[handedness] = undefined;
     });
   }

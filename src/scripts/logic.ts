@@ -42,6 +42,7 @@ function onFrame(delta : number, time : number, globals: Globals) {
   TEMPLATE.addTemplateRotation(player, controllers);
   TEMPLATE.addTemplateJump(player, controllers);
   TEMPLATE.addTemplateInteraction(scene, controllers);
+  TEMPLATE.addTemplatePhysics(scene,delta);
   //#endregion Samples
 
   gsap.ticker.tick(); //Keep animations synced with game loop

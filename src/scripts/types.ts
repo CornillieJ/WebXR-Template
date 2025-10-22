@@ -17,13 +17,14 @@ export type Globals = {
   controllers: Controllers;
 };
 export type Controllers ={
-    left?: ControllerType; 
-    right?: ControllerType;
-    none?: ControllerType;
+    left?: ControllerType | undefined; 
+    right?: ControllerType | undefined;
+    none?: ControllerType | undefined;
 }
 export type ControllerType = {
   raySpace: THREE.Object3D;
   gripSpace: THREE.Object3D;
   mesh: THREE.Object3D;
+  heldItem: THREE.Object3D | undefined;
   gamepad: GamepadWrapper;
 };
